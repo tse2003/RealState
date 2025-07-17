@@ -6,7 +6,6 @@ import fs from 'fs/promises'
 const uri = process.env.MONGO!
 const uploadDir = path.join(process.cwd(), 'public', 'uploads')
 
-// Type for PATCH update data
 type MedeeUpdateData = {
   garchig: string
   tailbar: string
@@ -32,8 +31,11 @@ async function saveFile(file: File) {
 }
 
 // ✅ GET
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id
   const { client, collection } = await getCollection()
   const medee = await collection.findOne({ _id: new ObjectId(id) })
   client.close()
@@ -46,24 +48,29 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
 }
 
 // ✅ DELETE
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id
   const { client, collection } = await getCollection()
   await collection.deleteOne({ _id: new ObjectId(id) })
   client.close()
   return NextResponse.json({ message: 'Амжилттай устгалаа' })
 }
 
-// ✅ PATCH (Засварлах)
-export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
-  const id = context.params.id
+// ✅ PATCH
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id
   const formData = await req.formData()
+
   const garchig = formData.get('garchig') as string
   const tailbar = formData.get('tailbar') as string
   const ognoo = formData.get('ognoo') as string
   const image = formData.get('image') as File | null
-
-  const { client, collection } = await getCollection()
 
   const updateData: MedeeUpdateData = { garchig, tailbar, ognoo }
 
@@ -72,8 +79,9 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
     updateData.imgUrl = imgUrl
   }
 
+  const { client, collection } = await getCollection()
   await collection.updateOne({ _id: new ObjectId(id) }, { $set: updateData })
-
   client.close()
+
   return NextResponse.json({ message: 'Амжилттай шинэчиллээ' })
 }
